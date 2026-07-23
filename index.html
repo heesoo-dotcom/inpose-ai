@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI가 본 내 인포즈 키워드 | INPOSE</title>
+  
+  <meta property="og:title" content="AI가 본 내 인포즈 대표 키워드 분석" />
+  <meta property="og:description" content="내 프로필 분위기와 대표 키워드를 확인하고 인스타그램 이벤트에 참여해보세요!" />
+  <meta property="og:type" content="website" />
+  
+  <!-- Tailwind CSS & React CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Pretendard Webfont -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+  <style>
+    :root {
+      --inpose-primary: #e6455e;
+      --inpose-primary-hover: #d0354e;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: #f6f8fb;
+      color: #0f172a;
+      letter-spacing: -0.025em;
+    }
+
+    .bg-inpose { background-color: var(--inpose-primary); }
+    .bg-inpose:hover { background-color: var(--inpose-primary-hover); }
+    .text-inpose { color: var(--inpose-primary); }
+    .border-inpose { border-color: var(--inpose-primary); }
+
+    /* 파스텔 글래스 카드 효과 */
+    .pastel-glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+    }
+
+    .pastel-glass-inner {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+    }
+
+    /* 피드 3D 둥둥 애니메이션 */
+    @keyframes floatLeft {
+      0%, 100% { transform: translateY(0px) rotate(-7deg) scale(0.96); }
+      50% { transform: translateY(-6px) rotate(-5deg) scale(0.96); }
+    }
+    @keyframes floatCenter {
+      0%, 100% { transform: translateY(-3px) rotate(0deg) scale(1.05); }
+      50% { transform: translateY(-9px) rotate(0.5deg) scale(1.05); }
+    }
+    @keyframes floatRight {
+      0%, 100% { transform: translateY(0px) rotate(7deg) scale(0.96); }
+      50% { transform: translateY(-6px) rotate(5deg) scale(0.96); }
+    }
+
+    .animate-float-left { animation: floatLeft 4s ease-in-out infinite; }
+    .animate-float-center { animation: floatCenter 3.5s ease-in-out infinite; }
+    .animate-float-right { animation: floatRight 4.2s ease-in-out infinite; }
+
+    /* 키워드 팝업 애니메이션 */
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.5) translateY(12px); }
+      70% { transform: scale(1.06) translateY(-1px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .animate-pop-1 { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 0.2s; opacity: 0; }
+    .animate-pop-2 { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 0.5s; opacity: 0; }
+    .animate-pop-3 { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 0.8s; opacity: 0; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .cursor-blink { animation: blink 0.7s infinite; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 selection:bg-rose-500 selection:text-white">
+
+  <div id="root" class="w-full max-w-md"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    // 1. 크리에이티브/사진 커뮤니티 기반 20개 대표 키워드 체계
+    const INPOSE_KEYWORD_TAXONOMY_20 = [
+      { name: "#선명한취향", chem: "#차분한기획자" },
+      { name: "#감각수집가", chem: "#디테일장인" },
+      { name: "#차분한기획자", chem: "#빠른실행" },
+      { name: "#빠른실행", chem: "#고요한동력" },
+      { name: "#다정한집요함", chem: "#비주얼텔러" },
+      { name: "#디테일장인", chem: "#에디토리얼" },
+      { name: "#고요한동력", chem: "#빛과그림자" },
+      { name: "#공간탐구자", chem: "#컨셉아키텍트" },
+      { name: "#톤앤매너", chem: "#아날로그텍스처" },
+      { name: "#비주얼텔러", chem: "#시네마틱무드" },
+      { name: "#시네마틱무드", chem: "#빛과그림자" },
+      { name: "#절제된여백", chem: "#자연스러운결" },
+      { name: "#빛과그림자", chem: "#시네마틱무드" },
+      { name: "#라이브컬러", chem: "#트렌드위버" },
+      { name: "#컨셉아키텍트", chem: "#차분한기획자" },
+      { name: "#아날로그텍스처", chem: "#톤앤매너" },
+      { name: "#에디토리얼", chem: "#디테일장인" },
+      { name: "#자연스러운결", chem: "#절제된여백" },
+      { name: "#트렌드위버", chem: "#비주얼텔러" },
+      { name: "#프레임아티스트", chem: "#공간탐구자" }
+    ];
+
+    // 2. 4가지 작업자 유형별 더미 데이터베이스 (프로필 클릭 시 실제 URL 이동)
+    const MOCK_INPOSE_WORKERS_DATABASE = [
+      // Photographer
+      { nickname: "지훈", type: "Photographer", profileUrl: "https://inpose.co/profile/jihoon_photo", bio: "자연광 속 정갈한 미학을 포착합니다.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&q=80", "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&q=80"] },
+      { nickname: "도현", type: "Photographer", profileUrl: "https://inpose.co/profile/dohyun_studio", bio: "시네마틱 무드의 룩북 작업실.", image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&q=80", "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=300&q=80"] },
+      // Beauty Artist
+      { nickname: "혜진", type: "Beauty Artist", profileUrl: "https://inpose.co/profile/hyejin_makeup", bio: "피부 결을 살리는 내추럴 메이크업.", image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=80", "https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?w=300&q=80"] },
+      { nickname: "서연", type: "Beauty Artist", profileUrl: "https://inpose.co/profile/seoyeon_beauty", bio: "화보 특화 헤어 스타일링 아티스트.", image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&q=80"] },
+      // Company
+      { nickname: "에이든스튜디오", type: "Company", profileUrl: "https://inpose.co/profile/aiden_studio", bio: "감각적인 스페이스 및 브랜딩 비주얼 디렉팅.", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&q=80", "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&q=80"] },
+      { nickname: "무드랩", type: "Company", profileUrl: "https://inpose.co/profile/mood_lab", bio: "콘텐츠 크리에이터를 위한 콜라보 프로젝트 하우스.", image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=80", "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=300&q=80"] },
+      // Model
+      { nickname: "민서", type: "Model", profileUrl: "https://inpose.co/profile/minseo_model", bio: "공간과 옷의 결을 섬세하게 대변합니다.", image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=80", "https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?w=300&q=80"] },
+      { nickname: "아린", type: "Model", profileUrl: "https://inpose.co/profile/arin_official", bio: "다양한 컨셉의 화보 전문 모델.", image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80", feeds: ["https://images.unsplash.com/photo-1509631179647-0177331693ae?w=300&q=80", "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=300&q=80"] }
+    ];
+
+    const SparklesIcon = () => (
+      <svg className="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    );
+
+    const DownloadIcon = () => (
+      <svg className="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+    );
+
+    const ShareIcon = () => (
+      <svg className="w-4 h-4 inline-block mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      </svg>
+    );
+
+    function App() {
+      const [profileUrl, setProfileUrl] = useState("");
+      const [loading, setLoading] = useState(false);
+      const [showDirectInput, setShowDirectInput] = useState(false);
+      const [toastMsg, setToastMsg] = useState(null);
+      const [errorState, setErrorState] = useState(null);
+      const [result, setResult] = useState(null);
+
+      // 카드 배경 테마
+      const [cardTheme, setCardTheme] = useState('pink');
+
+      // 환상의 짝꿍 키워드 클릭 모달
+      const [showChemModal, setShowChemModal] = useState(false);
+
+      // 인스타 이동 안내 모달
+      const [showInstaModal, setShowInstaModal] = useState(false);
+
+      const [typedIntro, setTypedIntro] = useState("");
+      const [typedMood, setTypedMood] = useState("");
+      const [isTypingDone, setIsTypingDone] = useState(false);
+
+      const [directData, setDirectData] = useState({
+        nickname: "",
+        workerType: "Model", // Model | Photographer | Beauty Artist | Company
+        bio: "",
+        feed1: "",
+        feed2: "",
+        feed3: ""
+      });
+
+      const cardRef = useRef(null);
+
+      const triggerToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 3000);
+      };
+
+      const getMockProfile = (url) => {
+        const now = new Date();
+        const isExpired = url.includes("expired") || url.includes("old");
+        const lastUseTime = isExpired 
+          ? new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString()
+          : new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+        return {
+          nickname: "민서",
+          profileImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+          workerType: "Model",
+          bio: "브랜드와 공간의 고유한 결을 기록합니다.",
+          lastUseTime: lastUseTime,
+          feeds: [
+            { image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80" },
+            { image: "https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?w=600&q=80" },
+            { image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80" }
+          ]
+        };
+      };
+
+      // 20개 체계에서 키워드 추출
+      const generateSmartAIKeywords = () => {
+        const shuffled = [...INPOSE_KEYWORD_TAXONOMY_20].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 3);
+        const mainKw = selected[0];
+
+        return {
+          keywords: selected.map(k => k.name),
+          chemistry: mainKw.chem,
+          intro: "취향을 또렷하게 기록하고, 작은 분위기를 오래 남기는 사람.",
+          mood: "차분하지만 감각적인 시선으로 브랜드와 공간을 해석하는 타입이에요."
+        };
+      };
+
+      // 타이핑 연출
+      useEffect(() => {
+        if (result) {
+          setTypedIntro("");
+          setTypedMood("");
+          setIsTypingDone(false);
+
+          const fullIntro = result.aiResult.intro || "";
+          const fullMood = result.aiResult.mood || "";
+
+          const timer = setTimeout(() => {
+            let i = 0;
+            const introInterval = setInterval(() => {
+              if (i < fullIntro.length) {
+                setTypedIntro(fullIntro.substring(0, i + 1));
+                i++;
+              } else {
+                clearInterval(introInterval);
+                let j = 0;
+                const moodInterval = setInterval(() => {
+                  if (j < fullMood.length) {
+                    setTypedMood(fullMood.substring(0, j + 1));
+                    j++;
+                  } else {
+                    clearInterval(moodInterval);
+                    setIsTypingDone(true);
+                  }
+                }, 28);
+              }
+            }, 38);
+          }, 1100);
+
+          return () => clearTimeout(timer);
+        }
+      }, [result]);
+
+      const handleAnalyze = async (customPayload) => {
+        setLoading(true);
+        setErrorState(null);
+        setResult(null);
+
+        setTimeout(() => {
+          try {
+            let profile = customPayload ? customPayload : getMockProfile(profileUrl);
+
+            if (profile.lastUseTime) {
+              const diffDays = (new Date().getTime() - new Date(profile.lastUseTime).getTime()) / (1000 * 3600 * 24);
+              if (diffDays > 7) {
+                setErrorState("expired");
+                setLoading(false);
+                return;
+              }
+            }
+
+            const aiRes = generateSmartAIKeywords();
+            setResult({ profile, aiResult: aiRes });
+          } catch (e) {
+            setErrorState("general");
+          } finally {
+            setLoading(false);
+          }
+        }, 1100);
+      };
+
+      const handleDirectSubmit = (e) => {
+        e.preventDefault();
+        const payload = {
+          nickname: directData.nickname || "민서",
+          workerType: directData.workerType || "Model",
+          profileImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+          bio: directData.bio || "스스로의 분위기와 인상을 기록합니다.",
+          lastUseTime: new Date().toISOString(),
+          feeds: [
+            { image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80" },
+            { image: "https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?w=600&q=80" },
+            { image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80" }
+          ]
+        };
+        setShowDirectInput(false);
+        handleAnalyze(payload);
+      };
+
+      const handleSaveImage = () => {
+        if (!cardRef.current) return;
+        html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+          const image = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = image;
+          a.download = `INPOSE-KEYWORD-${result.profile.nickname}.png`;
+          a.click();
+          triggerToast("결과 카드가 이미지로 저장되었어요!");
+          setShowInstaModal(true);
+        }).catch(() => alert("이미지 저장 중 오류가 발생했습니다."));
+      };
+
+      const handleShareLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        triggerToast("링크가 복사됐어요");
+      };
+
+      const themeGradientClass = {
+        pink: 'from-[#fff5f7] via-[#f2faf7] to-[#f0f6ff]',
+        mint: 'from-[#eefbf6] via-[#f0fdfa] to-[#f5f3ff]',
+        blue: 'from-[#f0f7ff] via-[#eef2ff] to-[#fff5f7]',
+        milk: 'from-[#ffffff] via-[#fafafa] to-[#f5f5f7]'
+      };
+
+      // 내 유형을 제외한 다른 콜라보 작업자들 필터링
+      const filteredChemistryWorkers = MOCK_INPOSE_WORKERS_DATABASE.filter(
+        w => w.type.toLowerCase() !== (result?.profile?.workerType || "model").toLowerCase()
+      );
+
+      return (
+        <div className="pastel-glass-card rounded-[32px] shadow-xl overflow-hidden flex flex-col min-h-[650px] my-4 relative border border-white">
+          
+          {/* 파스텔 오로라 배경 */}
+          <div className="absolute top-[-60px] left-[-60px] w-72 h-72 bg-rose-200/60 rounded-full blur-[80px] pointer-events-none"></div>
+          <div className="absolute top-[20%] right-[-50px] w-64 h-64 bg-emerald-100/70 rounded-full blur-[80px] pointer-events-none"></div>
+          <div className="absolute bottom-[-50px] left-[10%] w-72 h-72 bg-sky-200/50 rounded-full blur-[80px] pointer-events-none"></div>
+
+          {/* 토스트 메세지 */}
+          {toastMsg && (
+            <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg flex items-center space-x-1.5 animate-bounce">
+              <span className="text-rose-400">✓</span>
+              <span>{toastMsg}</span>
+            </div>
+          )}
+
+          {/* 상단 헤더 */}
+          <div className="px-6 pt-7 pb-4 text-center border-b border-rose-100/60 relative z-10 bg-white/40 backdrop-blur-md">
+            <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-bold bg-rose-100/80 text-rose-600 border border-rose-200/60 mb-1.5 tracking-wider">
+              INPOSE RENEWAL EVENT
+            </span>
+            <h1 className="text-lg font-bold text-slate-800 tracking-tight">AI가 본 내 인포즈 키워드</h1>
+          </div>
+
+          {/* 1. 로딩 화면 */}
+          {loading && (
+            <div className="p-8 my-auto text-center flex flex-col items-center space-y-3.5 relative z-10">
+              <div className="w-12 h-12 rounded-full border-3 border-rose-200 border-t-rose-500 animate-spin"></div>
+              <p className="text-sm font-bold text-slate-800">프로필 분위기를 분석 중이에요</p>
+              <p className="text-xs text-slate-400">피드와 소개글에서 나만의 키워드를 찾고 있어요.</p>
+            </div>
+          )}
+
+          {/* 2. 7일 초과 안내 */}
+          {!loading && errorState === "expired" && (
+            <div className="p-6 text-center my-auto space-y-4 relative z-10">
+              <div className="w-11 h-11 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto text-lg font-bold">
+                !
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">최근 활동 정보 확인 불가</h3>
+              <p className="text-xs text-slate-500 leading-relaxed px-2 font-medium">
+                최근 활동 정보가 확인되지 않아 분석 결과를 만들 수 없어요.<br />
+                인포즈에서 프로필을 업데이트한 뒤 다시 시도해주세요.
+              </p>
+              <div className="pt-2 space-y-2">
+                <button
+                  onClick={() => { setErrorState(null); setShowDirectInput(true); }}
+                  className="w-full py-3 bg-inpose text-white font-bold rounded-2xl text-xs shadow-md shadow-rose-200"
+                >
+                  직접 입력으로 분석하기
+                </button>
+                <button
+                  onClick={() => setErrorState(null)}
+                  className="w-full py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-2xl text-xs hover:bg-slate-200"
+                >
+                  돌아가기
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. 첫 화면 */}
+          {!loading && !errorState && !result && !showDirectInput && (
+            <div className="p-6 flex flex-col space-y-5 my-auto relative z-10">
+              <p className="text-xs text-slate-500 text-center leading-relaxed font-medium">
+                내 인포즈 프로필 URL을 넣으면,<br />AI가 나의 분위기와 대표 키워드를 분석해드려요.
+              </p>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs font-bold text-slate-700">인포즈 프로필 URL</label>
+                <input
+                  type="url"
+                  placeholder="https://inpose.co/your_nickname"
+                  value={profileUrl}
+                  onChange={(e) => setProfileUrl(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/90 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:border-rose-400 focus:ring-1 ring-rose-400 transition"
+                />
+                <p className="text-[11px] text-slate-400 leading-normal pt-1 font-normal">
+                  최근 7일 이내 인포즈를 사용한 프로필만 분석할 수 있어요. 마지막 사용일이 7일을 넘은 경우 결과가 표시되지 않을 수 있습니다.
+                </p>
+              </div>
+
+              <button
+                onClick={() => handleAnalyze()}
+                disabled={!profileUrl.trim()}
+                className="w-full py-3.5 bg-inpose text-white font-bold rounded-2xl shadow-lg shadow-rose-200 hover:opacity-95 disabled:opacity-40 transition text-sm flex items-center justify-center space-x-1.5"
+              >
+                <SparklesIcon />
+                <span>내 키워드 분석하기</span>
+              </button>
+
+              <div className="pt-2 text-center space-y-2 border-t border-slate-200/50">
+                <button
+                  onClick={() => setShowDirectInput(true)}
+                  className="text-xs font-medium text-slate-400 hover:text-rose-500 underline underline-offset-4"
+                >
+                  직접 입력으로 분석하기
+                </button>
+                <div className="flex justify-center space-x-2 pt-1">
+                  <button
+                    onClick={() => { setProfileUrl("https://inpose.co/demo"); handleAnalyze(getMockProfile("demo")); }}
+                    className="text-[11px] bg-rose-50 text-rose-600 font-semibold px-3 py-1.5 rounded-xl border border-rose-100 hover:bg-rose-100 transition"
+                  >
+                    ⚡ 샘플 프로필 체험
+                  </button>
+                  <button
+                    onClick={() => { setProfileUrl("https://inpose.co/expired"); handleAnalyze(getMockProfile("expired")); }}
+                    className="text-[11px] bg-amber-50 text-amber-700 font-semibold px-3 py-1.5 rounded-xl border border-amber-100 hover:bg-amber-100 transition"
+                  >
+                    ⚠️ 7일 경과 프로필 테스트
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 4. 직접 입력 모드 (4개 공식 작업자 유형 선택 지원) */}
+          {!loading && showDirectInput && !result && (
+            <form onSubmit={handleDirectSubmit} className="p-6 space-y-3 text-left relative z-10 bg-white/80 backdrop-blur-md rounded-2xl">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                <h3 className="text-xs font-bold text-slate-800">직접 프로필 작성</h3>
+                <button type="button" onClick={() => setShowDirectInput(false)} className="text-xs text-slate-400">취소</button>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-600">닉네임</label>
+                <input required type="text" placeholder="민서" value={directData.nickname} onChange={e=>setDirectData({...directData, nickname: e.target.value})} className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-600">작업자 유형</label>
+                <select
+                  value={directData.workerType}
+                  onChange={e=>setDirectData({...directData, workerType: e.target.value})}
+                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs mt-1"
+                >
+                  <option value="Model">Model</option>
+                  <option value="Photographer">Photographer</option>
+                  <option value="Beauty Artist">Beauty Artist</option>
+                  <option value="Company">Company</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-600">소개글</label>
+                <textarea required rows={2} placeholder="브랜드와 공간의 고유한 분위기를 기록합니다." value={directData.bio} onChange={e=>setDirectData({...directData, bio: e.target.value})} className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs mt-1" />
+              </div>
+              <button type="submit" className="w-full py-3 bg-inpose text-white font-bold text-xs rounded-xl shadow-md mt-2">
+                이 정보로 AI 분석하기
+              </button>
+            </form>
+          )}
+
+          {/* 5. 결과 화면 (환상의 짝꿍 클릭 시 모달 연결) */}
+          {!loading && result && (
+            <div className="p-4 space-y-4 relative z-10">
+              
+              {/* 테마 스위처 */}
+              <div className="flex items-center justify-between bg-white/70 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/80 shadow-sm">
+                <span className="text-[11px] font-bold text-slate-600">카드 테마</span>
+                <div className="flex space-x-1.5">
+                  <button onClick={()=>setCardTheme('pink')} className={`w-6 h-6 rounded-full bg-gradient-to-tr from-pink-200 to-rose-300 ring-2 transition ${cardTheme==='pink'?'ring-rose-500 scale-110':'ring-transparent opacity-60'}`}></button>
+                  <button onClick={()=>setCardTheme('mint')} className={`w-6 h-6 rounded-full bg-gradient-to-tr from-emerald-100 to-teal-200 ring-2 transition ${cardTheme==='mint'?'ring-teal-500 scale-110':'ring-transparent opacity-60'}`}></button>
+                  <button onClick={()=>setCardTheme('blue')} className={`w-6 h-6 rounded-full bg-gradient-to-tr from-sky-200 to-indigo-200 ring-2 transition ${cardTheme==='blue'?'ring-indigo-500 scale-110':'ring-transparent opacity-60'}`}></button>
+                  <button onClick={()=>setCardTheme('milk')} className={`w-6 h-6 rounded-full bg-gradient-to-tr from-slate-100 to-slate-200 ring-2 transition ${cardTheme==='milk'?'ring-slate-400 scale-110':'ring-transparent opacity-60'}`}></button>
+                </div>
+              </div>
+
+              {/* 스토리 공유용 카드 (9:16 비율) */}
+              <div
+                ref={cardRef}
+                className={`bg-gradient-to-b ${themeGradientClass[cardTheme]} rounded-[28px] p-5 shadow-lg relative overflow-hidden flex flex-col justify-between items-center min-h-[580px] border border-white/90 transition-all duration-300`}
+              >
+                
+                {/* 상단 헤더 */}
+                <div className="w-full flex justify-between items-center z-10 border-b border-rose-100/50 pb-2.5">
+                  <span className="font-bold text-[11px] tracking-wider text-rose-500">INPOSE AI</span>
+                  <span className="text-[9px] font-medium text-slate-400">RENEWAL EVENT</span>
+                </div>
+
+                {/* (1) 프로필 영역 (크기 56px 최적화) */}
+                <div className="flex flex-col items-center text-center mt-2 z-10 space-y-1">
+                  <img
+                    src={result.profile.profileImage}
+                    alt={result.profile.nickname}
+                    className="w-14 h-14 rounded-full object-cover shadow-md ring-2 ring-white"
+                  />
+                  <div className="pt-0.5 space-y-0.5">
+                    <h2 className="text-base font-bold text-slate-800 tracking-tight">
+                      {result.profile.nickname}
+                    </h2>
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-100/80 text-rose-600 border border-rose-200/50">
+                      {result.profile.workerType || "Model"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* (2) 피드 이미지 3장 */}
+                <div className="relative z-10 my-2 w-full flex justify-center items-center py-2">
+                  <div className="relative w-60 h-40 flex items-center justify-center">
+                    <div className="absolute left-2 w-24 h-32 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-slate-100 animate-float-left">
+                      <img src={result.profile.feeds[0]?.image} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute right-2 w-24 h-32 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-slate-100 animate-float-right">
+                      <img src={result.profile.feeds[2]?.image || result.profile.feeds[0]?.image} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute z-20 w-28 h-36 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white animate-float-center">
+                      <img src={result.profile.feeds[1]?.image || result.profile.feeds[0]?.image} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* (3) 키워드 3개 (정갈한 해시태그) */}
+                <div className="relative z-10 flex flex-wrap justify-center gap-1.5 mb-1">
+                  {result.aiResult.keywords.map((kw, idx) => (
+                    <span
+                      key={idx}
+                      className={`px-3 py-1.5 bg-white/90 text-slate-800 rounded-full text-xs font-bold shadow-sm border border-slate-100 animate-pop-${idx + 1}`}
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+
+                {/* (4) AI 한 줄 소개 */}
+                <div className="relative z-10 w-full pastel-glass-inner rounded-2xl p-4 text-center min-h-[95px] flex flex-col justify-center border border-white/80">
+                  <p className="text-xs font-semibold text-slate-700 leading-relaxed">
+                    “{typedIntro}
+                    {!isTypingDone && <span className="inline-block w-1.5 h-3 bg-rose-500 ml-0.5 cursor-blink"></span>}”
+                  </p>
+                  {typedMood && (
+                    <p className="text-[11px] font-normal text-slate-500 mt-1.5 leading-snug">
+                      {typedMood}
+                    </p>
+                  )}
+                </div>
+
+                {/* (5) 환상의 짝꿍 클릭 가능 버튼 (클릭 시 콜라보 모달 연결!) */}
+                <button
+                  onClick={() => setShowChemModal(true)}
+                  className="relative z-10 bg-white/90 hover:bg-rose-50 border border-rose-200/80 px-3.5 py-1.5 rounded-full text-[10px] font-medium text-slate-700 transition flex items-center space-x-1.5 shadow-sm active:scale-95"
+                >
+                  <span className="text-rose-500 font-bold">⚡ 환상의 짝꿍:</span>
+                  <span className="font-bold text-slate-900">{result.aiResult.chemistry}</span>
+                  <span className="text-rose-500 font-bold text-[9px] bg-rose-50 px-1.5 py-0.5 rounded-full">작업자 찾기 🔍</span>
+                </button>
+
+                {/* 워터마크 */}
+                <div className="w-full flex justify-between text-[9px] text-slate-400 pt-1 z-10 font-normal">
+                  <span>inpose.co AI Analysis</span>
+                  <span>#인포즈 #AI키워드</span>
+                </div>
+
+              </div>
+
+              {/* 하단 버튼 2개 */}
+              <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                <button
+                  onClick={handleSaveImage}
+                  className="py-3 bg-inpose text-white font-bold rounded-2xl shadow-md shadow-rose-200 hover:opacity-95 transition text-xs tracking-tight flex items-center justify-center"
+                >
+                  <DownloadIcon /> 결과 이미지 저장
+                </button>
+                <button
+                  onClick={handleShareLink}
+                  className="py-3 bg-white text-slate-700 font-bold rounded-2xl border border-slate-200/80 shadow-sm hover:bg-slate-50 transition text-xs tracking-tight flex items-center justify-center"
+                >
+                  <ShareIcon /> 친구에게 공유
+                </button>
+              </div>
+
+              {/* 이벤트 참여 방법 */}
+              <div className="pastel-glass-inner rounded-2xl p-4 text-left space-y-2 border border-white">
+                <h4 className="text-xs font-bold text-slate-800 flex items-center">
+                  <span className="text-rose-500 mr-1.5">📸</span> 이벤트 참여 방법
+                </h4>
+                <ol className="text-[11px] text-slate-600 space-y-1 list-decimal list-inside leading-relaxed font-normal">
+                  <li>인포즈 공식 SNS를 팔로우해요.</li>
+                  <li>AI 키워드 결과 이미지를 저장해요.</li>
+                  <li>인스타그램 스토리에 공유하고 인포즈 계정을 태그해요.</li>
+                  <li>이벤트 게시물 댓글에 인포즈 닉네임과 AI 키워드를 남겨요.</li>
+                </ol>
+                <div className="bg-rose-100/70 text-rose-700 font-bold text-[11px] py-1.5 text-center rounded-xl">
+                  🔥 스토리로 공유하면 당첨 확률 UP!
+                </div>
+                <p className="text-[10px] text-slate-400 text-center pt-0.5 font-normal">
+                  친구에게 공유하고 서로의 키워드를 비교해보세요.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setResult(null)}
+                className="text-xs text-slate-400 font-normal underline block mx-auto py-0.5 hover:text-slate-600"
+              >
+                다른 프로필 분석하기
+              </button>
+
+            </div>
+          )}
+
+          {/* 6. 환상의 짝꿍 키워드 클릭 모달 (내 유형을 제외한 다른 콜라보 작업자 모음) */}
+          {showChemModal && result && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 space-y-4 shadow-2xl max-h-[82vh] overflow-y-auto text-left">
+                
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md">INPOSE MATCHING</span>
+                    <h3 className="text-sm font-bold text-slate-800 mt-1">
+                      {result.aiResult.chemistry} 스타일의 콜라보 작업자
+                    </h3>
+                  </div>
+                  <button onClick={() => setShowChemModal(false)} className="text-slate-400 text-sm font-bold p-1">✕</button>
+                </div>
+
+                <div className="bg-rose-50/70 p-3 rounded-2xl border border-rose-100 text-[11px] text-slate-600 leading-relaxed">
+                  💡 <span className="font-bold text-slate-800">{result.profile.nickname}</span> 님의 유형(<span className="font-bold text-rose-600">{result.profile.workerType || "Model"}</span>)을 제외하고, 함께 콜라보하기 좋은 다른 분야의 인포즈 작업자 추천 리스트입니다.
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  {filteredChemistryWorkers.map((worker, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => window.open(worker.profileUrl, '_blank')}
+                      className="p-3 bg-slate-50 hover:bg-rose-50/40 rounded-2xl border border-slate-100 hover:border-rose-200 transition cursor-pointer flex items-center justify-between group"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <img src={worker.image} className="w-11 h-11 rounded-full object-cover border border-white shadow-sm" />
+                        <div>
+                          <div className="flex items-center space-x-1.5">
+                            <span className="font-bold text-xs text-slate-800 group-hover:text-rose-600 transition">{worker.nickname}</span>
+                            <span className="text-[9px] bg-white border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium">{worker.type}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[140px]">{worker.bio}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <div className="hidden sm:flex -space-x-2">
+                          {worker.feeds.map((f, fi) => (
+                            <img key={fi} src={f} className="w-7 h-9 rounded-md object-cover border border-white shadow-sm" />
+                          ))}
+                        </div>
+                        <span className="text-[10px] font-bold text-rose-500 bg-white px-2 py-1 rounded-lg border border-rose-100 group-hover:bg-rose-500 group-hover:text-white transition">
+                          프로필 ↗
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setShowChemModal(false)}
+                  className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-2xl text-xs hover:bg-slate-200 transition"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 7. 인스타그램 이동 모달 */}
+          {showInstaModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="w-full max-w-xs bg-white rounded-3xl p-5 text-center space-y-4 shadow-2xl">
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold">
+                  📸
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">이미지가 저장되었어요!</h3>
+                  <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                    인스타그램 스토리에 공유하고 인포즈 공식 계정을 태그해 이벤트에 참여해보세요.
+                  </p>
+                </div>
+                <div className="space-y-2 pt-1">
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block w-full py-3 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white font-bold rounded-2xl text-xs shadow-md"
+                  >
+                    인스타그램 열기
+                  </a>
+                  <button
+                    onClick={() => setShowInstaModal(false)}
+                    className="w-full py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-2xl text-xs"
+                  >
+                    확인
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 푸터 */}
+          <div className="p-3 border-t border-rose-100/40 bg-white/30 text-center mt-auto relative z-10">
+            <p className="text-[10px] text-slate-400 font-normal">
+              입력된 정보는 키워드 분석 결과 생성에만 사용됩니다.
+            </p>
+          </div>
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
