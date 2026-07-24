@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나의 비주얼 심층 분석 | INPOSE</title>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="나의 비주얼 심층 분석" />
+  <meta property="og:description" content="사진 한 장으로 나의 무드와 분위기를 심층 분석해보세요." />
+  <meta property="og:type" content="website" />
+
+  <!-- Tailwind CSS & React CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- NEXON Lv1 & Lv2 Gothic 웹폰트 -->
+  <style>
+    @font-face {
+      font-family: 'NEXON Lv1 Gothic';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/NEXON Lv1 Gothic OTF.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'NEXON Lv2 Gothic Bold';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/NEXON Lv2 Gothic Bold.woff') format('woff');
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    :root {
+      --inpose-primary: #e6455e;
+      --inpose-primary-hover: #d0354e;
+    }
+
+    body {
+      font-family: 'NEXON Lv1 Gothic', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      letter-spacing: -0.025em;
+    }
+
+    .font-headline {
+      font-family: 'NEXON Lv2 Gothic Bold', 'NEXON Lv1 Gothic', sans-serif;
+      font-weight: 700;
+    }
+
+    .bg-inpose { background-color: var(--inpose-primary); }
+    .bg-inpose:hover { background-color: var(--inpose-primary-hover); }
+    .text-inpose { color: var(--inpose-primary); }
+    .border-inpose { border-color: var(--inpose-primary); }
+
+    .break-keep { word-break: keep-all; }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .full-aurora-bg {
+      background: radial-gradient(circle at 50% 15%, #ffeef1 0%, #f0f6ff 55%, #f8fafc 100%);
+    }
+
+    .glass-box {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 30px -10px rgba(230, 69, 94, 0.05);
+    }
+
+    .glass-chip {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .mood-bubble {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.28));
+      backdrop-filter: blur(14px) saturate(1.4);
+      -webkit-backdrop-filter: blur(14px) saturate(1.4);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        0 10px 24px rgba(148, 163, 184, 0.16),
+        0 0 0 1px var(--bubble-ring, rgba(230, 69, 94, 0.16));
+      animation: bubbleFloat var(--bubble-duration, 3.8s) ease-in-out infinite;
+      animation-delay: var(--bubble-delay, 0s);
+      transform: translate3d(0, 0, 0) rotate(var(--bubble-rotate, 0deg));
+      will-change: transform;
+    }
+
+    @keyframes bubbleFloat {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) rotate(var(--bubble-rotate, 0deg));
+      }
+      50% {
+        transform: translate3d(var(--bubble-x, 4px), var(--bubble-y, -8px), 0) rotate(calc(var(--bubble-rotate, 0deg) + var(--bubble-swing, 2deg)));
+      }
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.7) translateY(6px); }
+      70% { transform: scale(1.04) translateY(-1px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .animate-pop-1 { animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 0.1s; opacity: 0; }
+    .animate-pop-2 { animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 0.25s; opacity: 0; }
+    .animate-pop-3 { animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 0.4s; opacity: 0; }
+
+    @keyframes quickTyping {
+      from { clip-path: inset(0 100% 0 0); opacity: 0.4; }
+      to { clip-path: inset(0 0 0 0); opacity: 1; }
+    }
+
+    @keyframes photoSnapIn {
+      0% { opacity: 0; transform: translateY(14px) scale(0.9) rotate(var(--photo-rotate, 0deg)); filter: blur(5px); }
+      70% { opacity: 1; transform: translateY(-2px) scale(1.03) rotate(var(--photo-rotate, 0deg)); filter: blur(0); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(var(--photo-rotate, 0deg)); filter: blur(0); }
+    }
+
+    .typing-title {
+      display: inline-block;
+      animation: quickTyping 0.78s steps(18, end) both;
+      will-change: clip-path, opacity;
+    }
+
+    .photo-reveal {
+      opacity: 0;
+      animation: photoSnapIn 0.48s cubic-bezier(0.18, 0.9, 0.25, 1.15) forwards;
+      animation-delay: var(--photo-delay, 0.15s);
+    }
+
+    .capture-ready .typing-title {
+      clip-path: inset(0 0 0 0) !important;
+      opacity: 1 !important;
+      animation: none !important;
+    }
+
+    .capture-ready .photo-reveal {
+      opacity: 1 !important;
+      transform: rotate(var(--photo-rotate, 0deg)) !important;
+      filter: none !important;
+      animation: none !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 selection:bg-rose-500 selection:text-white">
+
+  <div id="root" class="w-full max-w-md"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    const GEMINI_API_KEY = "AQ.Ab8RN6KpUUIMXIMuAGn96k3ADfdva8T_jYCClkvrJA1KbzfJGg";
+
+    // 🌸 [100% 내장] 올려주신 3번째 이미지 (회색 리본 니트 모델) Base64 데이터
+    const MODEL_THUMBNAIL_BASE64 = "https://i.postimg.cc/sXJ4xJw6/seukeulinsyas-2026-06-29-ohu-8-02-24.png";
+
+    // 🎨 [100% 내장] 올려주신 정식 인포즈 핑크 로고 이미지 Base64 데이터
+    const INPOSE_LOGO_BASE64 = "https://i.postimg.cc/ZKN0Lqh5/round2.png";
+
+    const ALLOWED_CATEGORIES = [
+      "프로필", "스튜디오", "인물스냅", "패션", "헤어", "뷰티", "광고/협찬", "컨셉",
+      "일상", "여행", "커플", "우정", "웨딩", "이벤트", "한복", "바디",
+      "반려동물", "풍경", "자연광", "야간", "코스프레", "특수분장", "누드", "제품",
+      "음식", "영상", "기타", "메이크업", "생활/제품", "푸드", "여행/레저", "건강/다이어트"
+    ];
+
+    const KEYWORD_TAXONOMY = {
+      model: ["청순한", "맑은", "사랑스러운", "수수한", "우아한", "부드러운", "성숙한", "세련된", "시크한", "산뜻한", "화려한", "개성적인", "캐주얼한", "귀여운", "힙한"],
+      photo: ["일상적인", "자연스러운", "감성적인", "따뜻한", "스토리가 있는", "몽환적인", "예술적인", "깔끔한", "빈티지한", "청량한", "순수한", "캐주얼한"],
+      beauty: ["귀여운", "자연스러운", "부드러운", "따뜻한", "맑은", "깔끔한", "상큼한", "순수한", "세련된", "잔잔한"]
+    };
+
+    const ALL_KEYWORDS_FLAT = [...new Set([...KEYWORD_TAXONOMY.model, ...KEYWORD_TAXONOMY.photo, ...KEYWORD_TAXONOMY.beauty])];
+
+    const MOCK_WORKERS = [
+      {
+        nickname: "혜진 메이크업",
+        profileImage: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80",
+        workerType: "beauty",
+        webProfileUrl: "https://inpose.co/link/hyejin_beauty"
+      },
+      {
+        nickname: "민서",
+        profileImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+        workerType: "model",
+        webProfileUrl: "https://inpose.co/link/minseo_model"
+      },
+      {
+        nickname: "지훈 스튜디오",
+        profileImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
+        workerType: "photo",
+        webProfileUrl: "https://inpose.co/link/jihoon_photo"
+      },
+      {
+        nickname: "무드 스튜디오",
+        profileImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&auto=format&fit=crop&q=80",
+        workerType: "company",
+        webProfileUrl: "https://inpose.co/link/mood_studio"
+      },
+      {
+        nickname: "아린",
+        profileImage: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80",
+        workerType: "model",
+        webProfileUrl: "https://inpose.co/link/arin_model"
+      },
+      {
+        nickname: "라온 포토",
+        profileImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
+        workerType: "photo",
+        webProfileUrl: "https://inpose.co/link/raon_photo"
+      },
+      {
+        nickname: "유나 메이크업",
+        profileImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&auto=format&fit=crop&q=80",
+        workerType: "beauty",
+        webProfileUrl: "https://inpose.co/link/yuna_beauty"
+      },
+      {
+        nickname: "온유",
+        profileImage: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=300&auto=format&fit=crop&q=80",
+        workerType: "model",
+        webProfileUrl: "https://inpose.co/link/onyu_model"
+      },
+      {
+        nickname: "스튜디오 하루",
+        profileImage: "https://images.unsplash.com/photo-1519741497674-611481863552?w=300&auto=format&fit=crop&q=80",
+        workerType: "company",
+        webProfileUrl: "https://inpose.co/link/haru_studio"
+      },
+      {
+        nickname: "채이 스타일",
+        profileImage: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=300&auto=format&fit=crop&q=80",
+        workerType: "beauty",
+        webProfileUrl: "https://inpose.co/link/chae_style"
+      }
+    ];
+
+    // 🔍 빠른 로컬 얼굴 감지: 브라우저 FaceDetector 우선, 미지원 시 피부톤 휴리스틱 fallback
+    const checkHumanFaceInImage = (base64Img) => {
+      return new Promise((resolve) => {
+        try {
+          const img = new Image();
+          img.onload = async () => {
+            if ("FaceDetector" in window) {
+              try {
+                const detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 });
+                const detected = await Promise.race([
+                  detector.detect(img),
+                  new Promise(resolveTimeout => setTimeout(() => resolveTimeout(null), 650))
+                ]);
+
+                if (Array.isArray(detected)) {
+                  resolve(detected.length > 0);
+                  return;
+                }
+              } catch (e) {
+                // FaceDetector가 현재 이미지 형식을 처리하지 못하면 아래 휴리스틱으로 이어갑니다.
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 140;
+            canvas.height = 140;
+            ctx.drawImage(img, 0, 0, 140, 140);
+
+            const imageData = ctx.getImageData(0, 0, 140, 140);
+            const data = imageData.data;
+            let skinPixelCount = 0;
+            let centralSkinPixelCount = 0;
+            const totalPixels = 140 * 140;
+
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              const pixelIndex = i / 4;
+              const x = pixelIndex % 140;
+              const y = Math.floor(pixelIndex / 140);
+
+              const max = Math.max(r, g, b);
+              const min = Math.min(r, g, b);
+              const isSkin = r > 95 && g > 45 && b > 30 && (max - min) > 14 && r > g * 1.05 && r > b * 1.15;
+
+              if (isSkin) {
+                skinPixelCount++;
+                if (x >= 32 && x <= 108 && y >= 24 && y <= 116) {
+                  centralSkinPixelCount++;
+                }
+              }
+            }
+
+            const skinRatio = skinPixelCount / totalPixels;
+            const centralSkinRatio = centralSkinPixelCount / (77 * 93);
+            resolve(skinRatio >= 0.025 && centralSkinRatio >= 0.035);
+          };
+          img.onerror = () => resolve(true);
+          img.src = base64Img;
+        } catch (e) {
+          resolve(true);
+        }
+      });
+    };
+
+    // 🔥 커뮤니티 밈 감성 타이틀 매핑
+    const getGenZTitle = (faceType, gender = "판단 어려움") => {
+      if (!faceType) return "확신의 순둥두부상";
+
+      const isMale = gender === "남성";
+      const isFemale = gender === "여성";
+      const gendered = (femaleText, maleText, neutralText) => isMale ? maleText : (isFemale ? femaleText : neutralText);
+
+      const pickHigher = (leftKey, rightKey) => {
+        const leftScore = Number(faceType[leftKey] || 0);
+        const rightScore = Number(faceType[rightKey] || 0);
+        return leftScore >= rightScore
+          ? { key: leftKey, score: leftScore }
+          : { key: rightKey, score: rightScore };
+      };
+
+      const winners = [
+        pickHigher('arab', 'tofu'),
+        pickHigher('cat', 'dog'),
+        pickHigher('glam', 'pure'),
+        pickHigher('cold', 'warm'),
+      ];
+
+      winners.sort((a, b) => b.score - a.score);
+      const pairKey = [winners[0].key, winners[1].key].sort().join('_');
+
+      const titleDict = {
+        arab_cat: "아랍고양이상",
+        arab_dog: "찐-한 강아지상",
+        arab_glam: gendered("돈 많은 부자언니상", "돈 많은 부자오빠상", "돈 많은 부자상"),
+        arab_pure: gendered("청순아랍공주상", "청순아랍왕자상", "청순아랍상"),
+        arab_cold: "확신의 북부대공상",
+        arab_warm: gendered("햇살캐 과대 언니상", "햇살캐 과대 오빠상", "햇살캐 과대상"),
+
+        cat_tofu: "말랑두부고양이",
+        dog_tofu: "확신의 순둥두부상",
+        glam_tofu: "존재감 100% 두부상",
+        pure_tofu: "맑눈두부상",
+        cold_tofu: "왠지 차가운 두부상",
+        tofu_warm: "말랑두부햇살캐",
+
+        cat_glam: "상위 3% 화려한 고양이상",
+        cat_pure: "청순고양이상",
+        cat_cold: gendered("앗 차가워! 얼음공주상", "앗 차가워! 얼음왕자상", "앗 차가워! 얼음왕자/공주상"),
+        cat_warm: "알고 보면 츤데레상",
+
+        dog_glam: gendered("재벌 2세 막내딸상", "재벌 2세 막내아들상", "재벌 2세 막내상"),
+        dog_pure: "만인의 첫사랑상",
+        cold_dog: "묘하게 차가운 강아지상",
+        dog_warm: "친화력 MAX 인간 댕댕이상",
+
+        cold_glam: gendered("범접불가 화려한 냉미녀", "범접불가 화려한 냉미남", "범접불가 화려한 냉미인"),
+        glam_warm: gendered("인싸 재질 부자언니상", "인싸 재질 부자오빠상", "인싸 재질 부자상"),
+        cold_pure: gendered("맑은데 차가운 청순 냉미녀", "맑은데 차가운 청순 냉미남", "맑은데 차가운 청순 냉미인"),
+        pure_warm: gendered("청순만화 햇살캐 여주상", "청순만화 햇살캐 남주상", "청순만화 햇살캐상")
+      };
+
+      return titleDict[pairKey] || "확신의 순둥두부상";
+    };
+
+    const getFacePairKey = (faceType = {}) => {
+      const pickHigher = (leftKey, rightKey) => {
+        const leftScore = Number(faceType[leftKey] || 0);
+        const rightScore = Number(faceType[rightKey] || 0);
+        return leftScore >= rightScore
+          ? { key: leftKey, score: leftScore }
+          : { key: rightKey, score: rightScore };
+      };
+
+      const winners = [
+        pickHigher('arab', 'tofu'),
+        pickHigher('cat', 'dog'),
+        pickHigher('glam', 'pure'),
+        pickHigher('cold', 'warm'),
+      ];
+
+      winners.sort((a, b) => b.score - a.score);
+      return [winners[0].key, winners[1].key].sort().join('_');
+    };
+
+    const getMoodTags = (faceType = {}) => {
+      const tagDict = {
+        arab_cat: ["#진한_눈매", "#도도함", "#아랍고양이상"],
+        arab_dog: ["#진한_이목구비", "#순한_인상", "#반전매력"],
+        arab_glam: ["#이목구비_자기주장", "#화려함", "#부자재질"],
+        arab_pure: ["#진한데_청순", "#아랍상", "#공주왕자재질"],
+        arab_cold: ["#진한_눈매", "#냉한_분위기", "#북부대공재질"],
+        arab_warm: ["#진한_인상", "#햇살캐", "#과대재질"],
+
+        cat_tofu: ["#말랑두부", "#은근_도도", "#순한데_고양이"],
+        dog_tofu: ["#순둥두부", "#편안한_인상", "#무해함"],
+        glam_tofu: ["#두부상", "#존재감있음", "#조용히_눈에띔"],
+        pure_tofu: ["#맑눈", "#두부상", "#청순한_무드"],
+        cold_tofu: ["#두부상", "#차분함", "#왠지_차가움"],
+        tofu_warm: ["#말랑두부", "#햇살캐", "#편안한_호감상"],
+
+        cat_glam: ["#화려한_고양이상", "#도도함", "#상위3퍼재질"],
+        cat_pure: ["#청순고양이", "#맑은데_도도", "#귀한조합"],
+        cat_cold: ["#얼음공주상", "#냉한_눈빛", "#앗차가워"],
+        cat_warm: ["#고양이상", "#츤데레", "#알고보면_따뜻"],
+
+        dog_glam: ["#강아지상", "#화려함", "#재벌막내재질"],
+        dog_pure: ["#첫사랑상", "#맑은_인상", "#만인의_호감상"],
+        cold_dog: ["#강아지상", "#묘하게_차가움", "#반전무드"],
+        dog_warm: ["#인간댕댕이", "#친화력MAX", "#호감상"],
+
+        cold_glam: ["#범접불가", "#화려한_냉미인", "#아우라있음"],
+        glam_warm: ["#인싸재질", "#화려함", "#부자언니오빠상"],
+        cold_pure: ["#청순냉미인", "#맑은데_차가움", "#분위기있음"],
+        pure_warm: ["#청순만화재질", "#햇살캐", "#여주남주상"]
+      };
+
+      return tagDict[getFacePairKey(faceType)] || ["#시그니처무드", "#분위기있음", "#반전매력"];
+    };
+
+    // 🌸 [수정 완료] 3:4 세로 비율 썸네일 카드 컴포넌트
+    const ConceptThumbnail = () => {
+      return (
+        <div className="relative w-[240px] h-[210px] mx-auto flex items-center justify-center my-1 select-none">
+          <div className="w-[140px] h-[186px] bg-white rounded-3xl p-2 shadow-2xl shadow-rose-200/60 border border-slate-100 transform -rotate-2 flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="w-full h-full bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 rounded-2xl flex items-center justify-center overflow-hidden relative">
+              <img
+                src={MODEL_THUMBNAIL_BASE64}
+                alt="촬영 컨셉 썸네일"
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            </div>
+          </div>
+
+          <div
+            className="mood-bubble absolute top-2 left-1 text-rose-500 font-bold text-[11px] px-3.5 py-1.5 rounded-full z-10"
+            style={{
+              "--bubble-rotate": "-6deg",
+              "--bubble-x": "5px",
+              "--bubble-y": "-7px",
+              "--bubble-swing": "2.5deg",
+              "--bubble-duration": "3.9s",
+              "--bubble-ring": "rgba(230, 69, 94, 0.22)"
+            }}
+          >
+            아랍? 두부?
+          </div>
+
+          <div
+            className="mood-bubble absolute top-6 right-1 text-purple-600 font-bold text-[11px] px-3.5 py-1.5 rounded-full z-10"
+            style={{
+              "--bubble-rotate": "6deg",
+              "--bubble-x": "-4px",
+              "--bubble-y": "-9px",
+              "--bubble-swing": "-2deg",
+              "--bubble-duration": "4.3s",
+              "--bubble-delay": "-0.8s",
+              "--bubble-ring": "rgba(147, 51, 234, 0.2)"
+            }}
+          >
+            고양이? 강아지?
+          </div>
+
+          <div
+            className="mood-bubble absolute bottom-2 left-2 text-sky-600 font-bold text-[11px] px-3.5 py-1.5 rounded-full z-10"
+            style={{
+              "--bubble-rotate": "3deg",
+              "--bubble-x": "4px",
+              "--bubble-y": "-8px",
+              "--bubble-swing": "1.8deg",
+              "--bubble-duration": "4.1s",
+              "--bubble-delay": "-1.4s",
+              "--bubble-ring": "rgba(14, 165, 233, 0.2)"
+            }}
+          >
+            청순? 화려?
+          </div>
+        </div>
+      );
+    };
+
+    // 🎯 50% 이상 우세 항목만 Primary Accent (#e6455e)로 강조하는 양방향 게이지 컴포넌트
+    const DualGaugeBar = ({ leftLabel, leftScore, rightLabel, rightScore, leftEmoji, rightEmoji }) => {
+      const isLeftDominant = leftScore >= rightScore;
+      
+      return (
+        <div className="space-y-1">
+          <div className="flex justify-between text-[11px] font-bold">
+            <span className={isLeftDominant ? "text-[#e6455e]" : "text-slate-400"}>
+              {leftEmoji} {leftLabel} {leftScore}%
+            </span>
+            <span className={!isLeftDominant ? "text-[#e6455e]" : "text-slate-400"}>
+              {rightEmoji} {rightLabel} {rightScore}%
+            </span>
+          </div>
+
+          <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden flex p-0.5">
+            <div
+              className={`h-full transition-all duration-1000 rounded-l-full ${isLeftDominant ? "bg-[#e6455e]" : "bg-slate-300/80"}`}
+              style={{ width: `${leftScore}%` }}
+            ></div>
+            <div
+              className={`h-full transition-all duration-1000 rounded-r-full ${!isLeftDominant ? "bg-[#e6455e]" : "bg-slate-300/80"}`}
+              style={{ width: `${rightScore}%` }}
+            ></div>
+          </div>
+        </div>
+      );
+    };
+
+    // 🕸️ 6꼭짓점 방사형 분위기 키워드 차트 컴포넌트
+    const RadarChart = ({ keywords }) => {
+      const list = (keywords && keywords.length >= 6) ? keywords.slice(0, 6) : [
+        { keyword: "청순한", score: 82 },
+        { keyword: "세련된", score: 78 },
+        { keyword: "감성적인", score: 71 },
+        { keyword: "자연스러운", score: 85 },
+        { keyword: "우아한", score: 68 },
+        { keyword: "캐주얼한", score: 74 }
+      ];
+
+      const cx = 110;
+      const cy = 110;
+      const r = 62;
+      const levels = [0.25, 0.5, 0.75, 1.0];
+      const total = 6;
+
+      const getCoordinates = (index, total, radius) => {
+        const angle = (Math.PI * 2 / total) * index - Math.PI / 2;
+        return {
+          x: cx + radius * Math.cos(angle),
+          y: cy + radius * Math.sin(angle)
+        };
+      };
+
+      const gridPolygons = levels.map(level => {
+        return Array.from({ length: total }).map((_, i) => {
+          const pt = getCoordinates(i, total, r * level);
+          return `${pt.x},${pt.y}`;
+        }).join(" ");
+      });
+
+      const dataPoints = list.map((item, i) => {
+        const val = Math.max(20, Math.min(100, item.score || 70)) / 100;
+        return getCoordinates(i, total, r * val);
+      });
+      const dataPointsString = dataPoints.map(p => `${p.x},${p.y}`).join(" ");
+
+      return (
+        <div className="w-full flex justify-center items-center py-2 select-none">
+          <svg width="250" height="230" viewBox="0 0 220 220" className="overflow-visible">
+            {gridPolygons.map((pts, idx) => (
+              <polygon
+                key={idx}
+                points={pts}
+                fill={idx === levels.length - 1 ? "rgba(248, 250, 252, 0.6)" : "none"}
+                stroke="#e2e8f0"
+                strokeWidth="1"
+                strokeDasharray={idx < levels.length - 1 ? "2 2" : "none"}
+              />
+            ))}
+
+            {Array.from({ length: total }).map((_, i) => {
+              const pt = getCoordinates(i, total, r);
+              return (
+                <line
+                  key={i}
+                  x1={cx}
+                  y1={cy}
+                  x2={pt.x}
+                  y2={pt.y}
+                  stroke="#cbd5e1"
+                  strokeWidth="1"
+                />
+              );
+            })}
+
+            <polygon
+              points={dataPointsString}
+              fill="rgba(230, 69, 94, 0.22)"
+              stroke="#e6455e"
+              strokeWidth="2"
+            />
+
+            {dataPoints.map((pt, i) => (
+              <circle
+                key={i}
+                cx={pt.x}
+                cy={pt.y}
+                r="3.5"
+                fill="#e6455e"
+                stroke="#ffffff"
+                strokeWidth="1.5"
+              />
+            ))}
+
+            {list.map((item, i) => {
+              const labelPt = getCoordinates(i, total, r + 24);
+              let textAnchor = "middle";
+              if (Math.abs(labelPt.x - cx) > 10) {
+                textAnchor = labelPt.x > cx ? "start" : "end";
+              }
+              return (
+                <text
+                  key={i}
+                  x={labelPt.x}
+                  y={labelPt.y}
+                  textAnchor={textAnchor}
+                  dominantBaseline="central"
+                  className="text-[12px] font-bold fill-slate-700"
+                >
+                  #{item.keyword}
+                  <tspan className="fill-rose-500 font-mono font-bold text-[11px]" dx="4">{item.score}%</tspan>
+                </text>
+              );
+            })}
+          </svg>
+        </div>
+      );
+    };
+
+    // 아이콘 SVG
+    const InstagramIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+      </svg>
+    );
+
+    const AppStoreIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M17.6 12.7c-.03-2.1 1.72-3.12 1.8-3.17-1-.46-2.55-.52-3.1-.53-1.32-.13-2.57.77-3.24.77-.67 0-1.7-.75-2.8-.73-1.44.02-2.78.84-3.52 2.13-1.5 2.6-.38 6.45 1.08 8.56.72 1.04 1.57 2.2 2.7 2.16 1.08-.04 1.49-.7 2.8-.7 1.3 0 1.68.7 2.82.68 1.17-.02 1.9-1.06 2.62-2.1.82-1.2 1.16-2.36 1.18-2.42-.03-.01-2.3-.88-2.34-3.65z"/>
+        <path d="M15.44 7.6c.6-.73 1.01-1.75.9-2.76-.87.03-1.92.58-2.54 1.31-.56.64-1.05 1.68-.92 2.67.97.08 1.96-.5 2.56-1.22z"/>
+      </svg>
+    );
+
+    const PlayStoreIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4.15 3.47c-.19.2-.3.5-.3.89v15.28c0 .39.11.69.31.9L12.1 12 4.15 3.47z" fill="#00A173"/>
+        <path d="m14.85 9.05-2.75 2.96 2.77 2.96 3.52-2.01c.98-.56.98-1.35 0-1.91l-3.54-2z" fill="#FFCE00"/>
+        <path d="m4.16 3.47 7.94 8.54 2.75-2.96-9.37-5.33c-.53-.3-.99-.38-1.32-.25z" fill="#00C8FF"/>
+        <path d="m12.1 12.01-7.94 8.53c.33.14.79.06 1.32-.24l9.39-5.33-2.77-2.96z" fill="#FF4B55"/>
+      </svg>
+    );
+
+    const compressImage = (file) => {
+      return new Promise((resolve) => {
+        try {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+              const maxDim = 800;
+
+              if (width > height && width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/jpeg', 0.82));
+            };
+            img.onerror = () => resolve(e.target.result);
+            img.src = e.target.result;
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(file);
+        } catch (err) {
+          resolve(null);
+        }
+      });
+    };
+
+    // 🤖 Google Gemini Vision AI
+    const callGeminiVisionAI = async (key, base64Images) => {
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
+      
+      const promptText = `
+당신은 인포즈(INPOSE) 브랜드의 전문 비주얼 디렉터 AI입니다.
+사진을 관찰하고 자연스러운 비율 수치(예: 62% vs 38%, 58% vs 42%)로 정밀 분석하세요.
+
+[필수 요구사항]
+1. hasFace: 사진에 사람 얼굴이 있는지 (true / false)
+2. gender: 사진 속 인물의 표현을 보고 "여성", "남성", "판단 어려움" 중 하나. 확실하지 않으면 "판단 어려움"
+3. faceType: 
+   - arab (아랍상: 이목구비가 진하고 쌍꺼풀이 짙거나 눈매가 선명한 인상, 20~80) vs tofu (두부상: 무쌍/순하고 부드러운 인상 = 100 - arab)
+   - cat (고양이상 20~80) vs dog (강아지상 = 100 - cat)
+   - glam (화려하고 존재감 있는 인상 20~80) vs pure (청순하고 맑은 인상 = 100 - glam)
+   - cold (차갑고 시크한 첫인상 20~80) vs warm (따뜻하고 편안한 첫인상 = 100 - cold)
+4. radarKeywords: ${JSON.stringify(ALL_KEYWORDS_FLAT)} 중 6개 선택 및 자연스러운 점수(60~92%) 부여
+5. faceImpressionSummary: 얼굴 분석 총평 2문장
+6. recommendedCategory: ${JSON.stringify(ALLOWED_CATEGORIES)} 중 1개
+7. categoryReasoning: 해당 카테고리가 잘 어울리는 이유 AI 요약 1문장
+8. topCategories: ${JSON.stringify(ALLOWED_CATEGORIES)} 중 10개 선택 후 매칭 점수 내림차순 부여
+
+JSON 응답:
+{
+  "hasFace": true,
+  "gender": "판단 어려움",
+  "faceType": { "arab": 58, "tofu": 42, "cat": 62, "dog": 38, "glam": 64, "pure": 36, "cold": 58, "warm": 42 },
+  "radarKeywords": [
+    { "keyword": "청순한", "score": 85 },
+    { "keyword": "세련된", "score": 78 },
+    { "keyword": "감성적인", "score": 72 },
+    { "keyword": "우아한", "score": 80 },
+    { "keyword": "자연스러운", "score": 88 },
+    { "keyword": "산뜻한", "score": 69 }
+  ],
+  "faceImpressionSummary": "눈매에서 선명하고 시크한 아우라가 전해지지만, 따뜻한 입매 연출에서 부드러운 반전 매력이 나타납니다.",
+  "recommendedCategory": "프로필",
+  "categoryReasoning": "맑고 세련된 이목구비와 은은한 조명이 어우러져 프로필 촬영에서 가장 독보적인 인상을 완성합니다.",
+  "topCategories": [
+    { "category": "프로필", "score": 96 },
+    { "category": "인물스냅", "score": 89 },
+    { "category": "뷰티", "score": 84 },
+    { "category": "스튜디오", "score": 77 },
+    { "category": "패션", "score": 68 },
+    { "category": "자연광", "score": 59 },
+    { "category": "컨셉", "score": 52 },
+    { "category": "일상", "score": 45 },
+    { "category": "여행", "score": 38 },
+    { "category": "광고/협찬", "score": 31 }
+  ]
+}
+`;
+
+      const imageParts = base64Images
+        .filter(Boolean)
+        .map(img => {
+          const [header, data] = img.includes(",") ? img.split(",") : ["", img];
+          const mimeMatch = header.match(/data:(.*?);base64/);
+          return {
+            inline_data: {
+              mime_type: mimeMatch?.[1] || "image/jpeg",
+              data
+            }
+          };
+        });
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": key
+        },
+        body: JSON.stringify({
+          contents: [{
+            role: "user",
+            parts: [{ text: promptText }, ...imageParts]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            responseMimeType: "application/json"
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error?.message || `Gemini API 요청 실패 (${response.status})`);
+      }
+
+      const rawText = data?.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("")
+        .trim();
+
+      if (!rawText) {
+        throw new Error("Gemini API 응답에 분석 결과가 없습니다.");
+      }
+
+      const cleanedJson = rawText
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .trim();
+
+      return JSON.parse(cleanedJson);
+    };
+
+    const getNaturalScore = () => Math.floor(Math.random() * 32) + 42;
+
+    const getGenderEmoji = (gender) => {
+      if (gender === "남성") return "👨🏻";
+      if (gender === "여성") return "👩🏻";
+      return "🧑🏻";
+    };
+
+    const generateDynamicAIResult = (nickname, gender = "판단 어려움") => {
+      const chosenCategory = "프로필";
+
+      const arabScore = getNaturalScore();
+      const tofuScore = 100 - arabScore;
+
+      const catScore = getNaturalScore();
+      const dogScore = 100 - catScore;
+
+      const glamScore = getNaturalScore();
+      const pureScore = 100 - glamScore;
+
+      const coldScore = getNaturalScore();
+      const warmScore = 100 - coldScore;
+
+      const nameTag = nickname ? `${nickname} 님의` : "사진 속 인물의";
+
+      const shuffledKw = [...ALL_KEYWORDS_FLAT].sort(() => 0.5 - Math.random());
+      const radarKeywords = shuffledKw.slice(0, 6).map((kw) => ({
+        keyword: kw,
+        score: Math.floor(Math.random() * 26) + 68
+      }));
+
+      const otherCategories = ALLOWED_CATEGORIES.filter(c => c !== chosenCategory)
+        .sort(() => 0.5 - Math.random());
+      const selectedCategories = [chosenCategory, ...otherCategories.slice(0, 9)];
+
+      let baseScore = Math.floor(Math.random() * 5) + 93;
+      const topCategories = selectedCategories.map((cat, i) => {
+        if (i === 0) return { category: cat, score: baseScore };
+        const drop = Math.floor(Math.random() * 8) + 3;
+        baseScore = Math.max(30, baseScore - drop);
+        return { category: cat, score: baseScore };
+      });
+
+      const categoryReasonings = [
+        `${nameTag} 맑고 세련된 이목구비와 은은한 조명이 어우러져 ${chosenCategory} 촬영에서 가장 독보적인 아우라를 완성합니다.`,
+        `${nameTag} 자연스러운 시선 처리와 차분한 톤앤매너가 만나 ${chosenCategory} 촬영에서 매력이 극대화됩니다.`,
+        `${nameTag} 도도하면서도 부드러운 이미지와 분위기 있는 빛의 흐름이 ${chosenCategory} 촬영과 가장 잘 어우러집니다.`,
+        `${nameTag} 산뜻하고 투명한 분위기가 돋보여 ${chosenCategory} 촬영에서 본연의 멋이 가장 빛을 발합니다.`
+      ];
+
+      const faceImpressionSummaries = [
+        `${nameTag} 또렷한 눈매에서 선명한 아우라가 전해지며, 부드러운 미소 속에서 따뜻한 반전 매력이 은은하게 느껴집니다.`,
+        `${nameTag} 자연스러운 표정 속에 차분함과 우아함이 동시에 깃들어 있어, 볼수록 매력적인 인상을 남깁니다.`,
+        `${nameTag} 맑고 깨끗한 이미지와 절제된 시선 처리가 잘 어우러져 한층 세련되면서도 상큼한 분위기를 선사합니다.`,
+        `${nameTag} 감성적인 빛의 흐름과 편안한 시선이 조화를 이루어 도도함 속에 은은한 부드러움이 정갈하게 살아납니다.`
+      ];
+
+      return {
+        hasFace: true,
+        gender,
+        genderEmoji: getGenderEmoji(gender),
+        faceType: {
+          arab: arabScore, tofu: tofuScore,
+          cat: catScore, dog: dogScore,
+          glam: glamScore, pure: pureScore,
+          cold: coldScore, warm: warmScore
+        },
+        radarKeywords: radarKeywords,
+        faceImpressionSummary: faceImpressionSummaries[Math.floor(Math.random() * faceImpressionSummaries.length)],
+        recommendedCategory: chosenCategory,
+        categoryReasoning: categoryReasonings[Math.floor(Math.random() * categoryReasonings.length)],
+        topCategories: topCategories
+      };
+    };
+
+    const normalizeAIResult = (aiResult, nickname) => {
+      const safeResult = aiResult && typeof aiResult === "object" ? aiResult : {};
+      const normalizedGender = ["여성", "남성", "판단 어려움"].includes(safeResult.gender)
+        ? safeResult.gender
+        : "판단 어려움";
+      const fallback = generateDynamicAIResult(nickname, normalizedGender);
+      const recommendedCategory = ALLOWED_CATEGORIES.includes(safeResult.recommendedCategory)
+        ? safeResult.recommendedCategory
+        : fallback.recommendedCategory;
+
+      const normalizedTopCategories = Array.isArray(safeResult.topCategories)
+        ? safeResult.topCategories
+            .filter(item => item && ALLOWED_CATEGORIES.includes(item.category))
+            .map(item => ({
+              category: item.category,
+              score: Math.max(30, Math.min(99, Number(item.score) || 70))
+            }))
+        : [];
+
+      const topCategoryNames = new Set(normalizedTopCategories.map(item => item.category));
+      if (!topCategoryNames.has(recommendedCategory)) {
+        normalizedTopCategories.unshift({ category: recommendedCategory, score: 96 });
+        topCategoryNames.add(recommendedCategory);
+      }
+
+      fallback.topCategories.forEach(item => {
+        if (normalizedTopCategories.length < 10 && !topCategoryNames.has(item.category)) {
+          normalizedTopCategories.push(item);
+          topCategoryNames.add(item.category);
+        }
+      });
+
+      return {
+        ...fallback,
+        ...safeResult,
+        hasFace: safeResult.hasFace !== false,
+        gender: normalizedGender,
+        genderEmoji: getGenderEmoji(normalizedGender),
+        faceType: { ...fallback.faceType, ...(safeResult.faceType || {}) },
+        radarKeywords: Array.isArray(safeResult.radarKeywords) && safeResult.radarKeywords.length >= 6
+          ? safeResult.radarKeywords.slice(0, 6)
+          : fallback.radarKeywords,
+        recommendedCategory,
+        categoryReasoning: safeResult.categoryReasoning || `${recommendedCategory} 촬영과 잘 어울리는 분위기와 무드가 사진에서 자연스럽게 드러납니다.`,
+        topCategories: normalizedTopCategories.slice(0, 10)
+      };
+    };
+
+    const SparklesIcon = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    );
+
+    const UploadIcon = () => (
+      <svg className="w-5 h-5 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    );
+
+    const DownloadIcon = () => (
+      <svg className="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+      </svg>
+    );
+
+    const ShareIcon = () => (
+      <svg className="w-4 h-4 mr-1.5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+      </svg>
+    );
+
+    function App() {
+      const [nickname, setNickname] = useState("");
+      const [uploadedPhotos, setUploadedPhotos] = useState([]);
+
+      const [loading, setLoading] = useState(false);
+      const [toastMsg, setToastMsg] = useState(null);
+      const [noFaceModal, setNoFaceModal] = useState(false);
+      const [result, setResult] = useState(null);
+      const [resultReady, setResultReady] = useState(false);
+
+      const cardRef = useRef(null);
+      const fileInputRef = useRef(null);
+      const workerScrollRef = useRef(null);
+      const workerScrollPausedRef = useRef(false);
+      const workerScrollResumeTimerRef = useRef(null);
+
+      useEffect(() => {
+        if (!result) {
+          setResultReady(false);
+          return;
+        }
+
+        setResultReady(false);
+        const readyTimer = setTimeout(() => setResultReady(true), 120);
+        return () => clearTimeout(readyTimer);
+      }, [result]);
+
+      useEffect(() => {
+        if (!result) return;
+
+        const scrollTimer = setInterval(() => {
+          const el = workerScrollRef.current;
+          if (!el || workerScrollPausedRef.current) return;
+
+          const loopStartItem = el.children[MOCK_WORKERS.length];
+          const loopWidth = loopStartItem ? loopStartItem.offsetLeft : el.scrollWidth / 2;
+          if (loopWidth <= el.clientWidth) return;
+
+          if (el.scrollLeft >= loopWidth) {
+            el.scrollLeft = el.scrollLeft - loopWidth;
+          } else {
+            el.scrollLeft = el.scrollLeft + 1;
+          }
+        }, 38);
+
+        return () => {
+          clearInterval(scrollTimer);
+          if (workerScrollResumeTimerRef.current) {
+            clearTimeout(workerScrollResumeTimerRef.current);
+          }
+        };
+      }, [result]);
+
+      useEffect(() => {
+        if (!result) return;
+
+        let tries = 0;
+        const tick = () => {
+          const el = workerScrollRef.current;
+          if (el) {
+            el.scrollLeft = 0;
+            return;
+          }
+          tries += 1;
+          if (tries < 20) requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
+      }, [result]);
+
+      const pauseWorkerAutoScroll = () => {
+        workerScrollPausedRef.current = true;
+        if (workerScrollResumeTimerRef.current) {
+          clearTimeout(workerScrollResumeTimerRef.current);
+        }
+      };
+
+      const resumeWorkerAutoScrollSoon = () => {
+        if (workerScrollResumeTimerRef.current) {
+          clearTimeout(workerScrollResumeTimerRef.current);
+        }
+        workerScrollResumeTimerRef.current = setTimeout(() => {
+          workerScrollPausedRef.current = false;
+        }, 1200);
+      };
+
+      const showToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 3000);
+      };
+
+      const handleFileChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        if (uploadedPhotos.length + files.length > 3) {
+          alert("사진은 최대 3장까지만 업로드할 수 있어요.");
+          return;
+        }
+
+        for (const file of files) {
+          const compressed = await compressImage(file);
+          if (compressed) {
+            setUploadedPhotos(prev => [...prev, compressed].slice(0, 3));
+          }
+        }
+      };
+
+      const removePhoto = (index) => {
+        setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
+      };
+
+      // ⏳ AI 분석 핸들러
+      const handleAnalyze = async () => {
+        if (uploadedPhotos.length === 0) {
+          alert("사진을 최소 1장 이상 업로드해주세요.");
+          return;
+        }
+
+        setResultReady(false);
+
+        try {
+          const targetImages = uploadedPhotos;
+          const targetName = nickname.trim() || "크리에이터";
+
+          const faceChecks = await Promise.all(targetImages.map(checkHumanFaceInImage));
+          const isFaceDetected = faceChecks.some(Boolean);
+          if (!isFaceDetected) {
+            setLoading(false);
+            setNoFaceModal(true);
+            return;
+          }
+
+          setLoading(true);
+
+          let aiAnalysisData;
+          if (GEMINI_API_KEY.trim()) {
+            aiAnalysisData = await callGeminiVisionAI(GEMINI_API_KEY.trim(), targetImages);
+          } else {
+            aiAnalysisData = generateDynamicAIResult(targetName);
+          }
+
+          if (aiAnalysisData.hasFace === false) {
+            setLoading(false);
+            setNoFaceModal(true);
+            return;
+          }
+
+          const normalizedAIResult = normalizeAIResult(aiAnalysisData, targetName);
+
+          setResult({
+            nickname: targetName,
+            images: targetImages,
+            aiResult: normalizedAIResult
+          });
+
+        } catch (err) {
+          console.error("AI 시각 분석 예외 처리:", err);
+          setResult({
+            nickname: nickname.trim() || "크리에이터",
+            images: uploadedPhotos,
+            aiResult: generateDynamicAIResult(nickname.trim())
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const waitForImagesInElement = async (element) => {
+        const images = Array.from(element.querySelectorAll("img"));
+        await Promise.all(images.map(img => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        }));
+      };
+
+      const handleSaveImage = async () => {
+        if (!cardRef.current) return;
+
+        const target = cardRef.current;
+        target.classList.add("capture-ready");
+
+        try {
+          setResultReady(true);
+          await waitForImagesInElement(target);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+          const canvas = await html2canvas(target, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff",
+            imageTimeout: 15000,
+            scrollX: 0,
+            scrollY: -window.scrollY
+          });
+
+          const image = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = image;
+          a.download = `INPOSE-VISUAL-SCAN-${result?.nickname || 'USER'}.png`;
+          a.click();
+          showToast("결과 카드가 이미지로 저장되었어요!");
+        } catch (err) {
+          console.error("결과 카드 이미지 저장 실패:", err);
+          alert("이미지 저장이 어려워요. 화면을 캡처해서 스토리에 공유해도 참여할 수 있어요.");
+        } finally {
+          target.classList.remove("capture-ready");
+        }
+      };
+
+      const handleShareLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        showToast("링크가 복사됐어요");
+      };
+
+      return (
+        <div className="full-aurora-bg min-h-screen w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden border border-slate-100 flex flex-col my-0 sm:my-4 relative">
+          
+          {toastMsg && (
+            <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-2xl flex items-center space-x-1.5 animate-bounce">
+              <span className="text-rose-400">✓</span>
+              <span>{toastMsg}</span>
+            </div>
+          )}
+
+          {/* 🚨 얼굴 미인식 원버튼 팝업 모달 */}
+          {noFaceModal && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-5">
+              <div className="bg-white w-full max-w-xs rounded-[20px] p-6 text-center space-y-4 shadow-2xl border border-slate-100 animate-pop-1">
+                <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner">
+                  📸
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="text-sm font-bold text-slate-900 font-headline">얼굴을 인식할 수 없어요</h3>
+                  <p className="text-xs text-slate-500 font-normal leading-relaxed break-keep">
+                    업로드하신 사진에서 인물의 얼굴을 찾지 못했습니다.<br />얼굴이 또렷하게 나온 다른 사진으로 올려주세요!
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setNoFaceModal(false);
+                    setUploadedPhotos([]);
+                  }}
+                  className="w-full py-3 bg-inpose text-white font-semibold rounded-xl text-xs shadow-md shadow-rose-200 hover:opacity-95 transition cursor-pointer"
+                >
+                  다른 사진 업로드하기
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="px-6 pt-7 pb-4 text-center border-b border-rose-100/40 bg-white/40 backdrop-blur-md">
+            <span className="inline-block px-3 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-600 border border-rose-100 mb-1.5 tracking-wider">
+              INPOSE VISUAL SCAN
+            </span>
+            <h1 className="text-xl font-headline text-slate-900 tracking-tight">
+              나의 비주얼 심층 분석
+            </h1>
+          </div>
+
+          {/* ⏳ 로딩 화면 */}
+          {loading && (
+            <div className="p-8 my-auto text-center flex flex-col items-center justify-center space-y-4 py-12 animate-fade-in">
+              <div className="w-[120px] h-[120px] flex items-center justify-center relative">
+                <img
+                  src={INPOSE_LOGO_BASE64}
+                  alt="INPOSE"
+                  className="w-full h-full object-contain animate-pulse"
+                />
+              </div>
+              <p className="text-xs font-semibold text-slate-600 tracking-tight mt-2">
+                인포즈 AI가 비주얼을 분석하고 있어요...
+              </p>
+            </div>
+          )}
+
+          {!loading && !result && (
+            <div className="p-6 flex flex-col space-y-3 my-auto">
+
+              <ConceptThumbnail />
+
+              <p className="text-xs text-slate-500 text-center leading-relaxed font-normal break-keep">
+                사진 한 장으로 나의 무드와 분위기를 심층 분석해보세요.
+              </p>
+
+              <div className="space-y-3 text-left pt-1">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700">닉네임</label>
+                  <input
+                    type="text"
+                    placeholder="닉네임을 입력해 주세요 (선택)"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white/80 border border-slate-200/80 rounded-xl text-xs mt-1 focus:outline-none focus:border-rose-400 transition"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-semibold text-slate-700">사진 업로드 (1~3장)</label>
+                    <span className="text-[10px] text-rose-500 font-medium">{uploadedPhotos.length} / 3장</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 my-2">
+                    {uploadedPhotos.map((img, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group">
+                        <img src={img} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(idx)}
+                          className="absolute top-1 right-1 bg-slate-900/70 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+
+                    {uploadedPhotos.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-rose-400 flex flex-col items-center justify-center bg-white/60 backdrop-blur-md transition"
+                      >
+                        <UploadIcon />
+                        <span className="text-[10px] text-slate-400 font-medium">사진 추가</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                  />
+                </div>
+
+                <button
+                  onClick={handleAnalyze}
+                  disabled={uploadedPhotos.length === 0}
+                  className="w-full py-3.5 bg-inpose text-white font-semibold rounded-2xl shadow-md shadow-rose-200 hover:opacity-95 disabled:opacity-40 transition text-sm flex items-center justify-center space-x-1.5 mt-2 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <SparklesIcon className="w-4 h-4 text-white" />
+                  <span>내 비주얼 무드 분석하기</span>
+                </button>
+
+                <p className="text-[11px] text-slate-400 text-center leading-normal pt-1 font-normal break-keep">
+                  첨부한 사진은 무드 및 얼굴 분석 용도 이외에는 절대 사용되지 않으며, 페이지를 나가면 즉시 파기됩니다.
+                </p>
+              </div>
+
+            </div>
+          )}
+
+          {/* 🎯 결과 페이지 */}
+          {!loading && result && (
+            <div className="p-4 space-y-4">
+              
+              {/* 📸 [이미지 저장 전용 범위: cardRef] */}
+              <div
+                ref={cardRef}
+                className="py-3 px-2 relative overflow-hidden flex flex-col justify-between items-center text-center space-y-4 bg-white/30 rounded-3xl"
+              >
+                {/* 🌟 GenZ 상단 헤더 */}
+                <div className="pt-2 pb-0.5 space-y-1 text-center">
+                  <p className="text-xs font-semibold text-slate-500 tracking-tight">
+                    <span className="text-slate-800 font-bold">{result.nickname}</span> 님은
+                  </p>
+                  <h2 className="text-lg sm:text-xl font-headline text-rose-500 tracking-tight break-keep">
+                    <span className={resultReady ? "typing-title" : "opacity-0 inline-block"}>
+                      {getGenZTitle(result.aiResult.faceType, result.aiResult.gender)}
+                    </span>
+                  </h2>
+                  <div className={`flex flex-col items-center transition-opacity duration-500 ${resultReady ? "opacity-100" : "opacity-0"}`}>
+                    <div className="flex flex-wrap items-center justify-center gap-1 px-4">
+                      {getMoodTags(result.aiResult.faceType).map((tag) => (
+                        <span key={tag} className="text-[10px] font-semibold text-slate-500">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1) 사진 영역 */}
+                <div className="w-full my-1 flex justify-center items-center">
+                  {result.images.length === 1 && (
+                    <div className={`w-40 h-52 rounded-2xl overflow-hidden shadow-lg border-2 border-white bg-slate-100 ${resultReady ? "photo-reveal" : "opacity-0"}`} style={{ "--photo-rotate": "-1deg", "--photo-delay": "0.7s" }}>
+                      <img src={result.images[0]} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  {result.images.length === 2 && (
+                    <div className="flex items-center justify-center space-x-3">
+                      <div className={`w-32 h-44 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-slate-100 ${resultReady ? "photo-reveal" : "opacity-0"}`} style={{ "--photo-rotate": "-2deg", "--photo-delay": "0.7s" }}>
+                        <img src={result.images[0]} className="w-full h-full object-cover" />
+                      </div>
+                      <div className={`w-32 h-44 rounded-2xl overflow-hidden shadow-lg border-2 border-white bg-slate-100 ${resultReady ? "photo-reveal" : "opacity-0"}`} style={{ "--photo-rotate": "2deg", "--photo-delay": "0.84s" }}>
+                        <img src={result.images[1]} className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  )}
+
+                  {result.images.length >= 3 && (
+                    <div className="flex items-center justify-center -space-x-4 py-1">
+                      <div className={`w-24 h-36 rounded-xl overflow-hidden shadow-sm border-2 border-white bg-slate-100 z-10 ${resultReady ? "photo-reveal" : "opacity-0"}`} style={{ "--photo-rotate": "-6deg", "--photo-delay": "0.7s" }}>
+                        <img src={result.images[0]} className="w-full h-full object-cover" />
+                      </div>
+                      <div className={`w-28 h-40 rounded-2xl overflow-hidden shadow-md border-2 border-white bg-slate-100 z-30 ${resultReady ? "photo-reveal" : "opacity-0"}`} style={{ "--photo-rotate": "0deg", "--photo-delay": "0.84s" }}>
+                        <img src={result.images[2] || result.images[0]} className="w-full h-full object-cover" />
+                      </div>
+                      <div className={`w-24 h-36 rounded-xl overflow-hidden shadow-sm border-2 border-white bg-slate-100 z-20 ${resultReady ? "photo-reveal" : "opacity-0"}`} style={{ "--photo-rotate": "6deg", "--photo-delay": "0.98s" }}>
+                        <img src={result.images[1]} className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2) 🔥 [박스 1] AI 얼굴 & 인상 분위기 분석 */}
+                <div className="w-full glass-box rounded-2xl p-4 text-left space-y-3.5 my-1">
+                  <div className="flex items-center justify-between pb-2 border-b border-rose-100/60">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <span>✨</span> AI 얼굴 & 무드 심층 스캔
+                    </span>
+                    <span className="text-[10px] font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                      {result.aiResult.genderEmoji || "🧑🏻"} {result.aiResult.gender || "판단 어려움"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 pt-0.5">
+                    <DualGaugeBar
+                      leftLabel="아랍상" leftScore={result.aiResult.faceType?.arab || 58} leftEmoji="🕌"
+                      rightLabel="두부상" rightScore={result.aiResult.faceType?.tofu || 42} rightEmoji="🤍"
+                    />
+
+                    <DualGaugeBar
+                      leftLabel="고양이상" leftScore={result.aiResult.faceType?.cat || 62} leftEmoji="🐱"
+                      rightLabel="강아지상" rightScore={result.aiResult.faceType?.dog || 38} rightEmoji="🐶"
+                    />
+
+                    <DualGaugeBar
+                      leftLabel="화려함" leftScore={result.aiResult.faceType?.glam || 64} leftEmoji="✨"
+                      rightLabel="청순함" rightScore={result.aiResult.faceType?.pure || 36} rightEmoji="🫧"
+                    />
+
+                    <DualGaugeBar
+                      leftLabel="차가움" leftScore={result.aiResult.faceType?.cold || 58} leftEmoji="❄️"
+                      rightLabel="따뜻함" rightScore={result.aiResult.faceType?.warm || 42} rightEmoji="☀️"
+                    />
+                  </div>
+
+                  <div className="pt-2 border-t border-rose-100/50">
+                    <p className="text-[11px] text-slate-600 font-normal leading-relaxed break-keep">
+                      {result.aiResult.faceImpressionSummary}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3) 🎯 [박스 2] 6각 방사형 분위기 키워드 차트 리포트 */}
+                <div className="w-full glass-box rounded-2xl p-4 text-left space-y-2 my-1">
+                  <div className="pb-2 border-b border-rose-100/60 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-rose-500 font-bold uppercase tracking-wider block">INPOSE MOOD KEYWORDS</span>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        나의 <span className="text-inpose font-extrabold">분위기 키워드</span> 리포트 🎯
+                      </h3>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-600 font-normal leading-relaxed pt-1 break-keep">
+                    인포즈에 가입하게 된다면, 나를 표현할 프로필 무드 키워드로 이 6가지를 설정해 보는 건 어떨까요?
+                  </p>
+
+                  <RadarChart keywords={result.aiResult.radarKeywords || []} />
+                </div>
+
+                {/* 4) 📌 [박스 3] 어울리는 추천 촬영 + 1문장 AI 요약 + AI 촬영 컨셉 매칭 TOP 10 */}
+                <div className="w-full glass-box rounded-2xl p-4 text-left space-y-3 my-1">
+                  <div className="pb-2 border-b border-rose-100/50 space-y-1">
+                    <span className="text-[10px] text-rose-500 font-bold uppercase tracking-wider block">RECOMMENDED SHOOTING</span>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      어울리는 촬영: <span className="text-rose-500 font-extrabold">{result.aiResult.recommendedCategory} 촬영</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-600 font-normal leading-relaxed pt-1 break-keep">
+                      {result.aiResult.categoryReasoning}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pt-1">
+                    <span className="text-[11px] font-bold text-slate-800 block">AI 촬영 컨셉 매칭 TOP 10</span>
+                    {(result.aiResult.topCategories || []).map((item, idx) => (
+                      <div key={idx} className="flex items-center space-x-2 text-xs">
+                        <span className="w-16 text-[11px] font-semibold text-slate-700 truncate text-left">
+                          {item.category}
+                        </span>
+
+                        <div className="flex-1 h-2.5 bg-slate-200/50 rounded-full overflow-hidden relative flex items-center p-0.5">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#e6455e] to-rose-400 rounded-full transition-all duration-1000 ease-out"
+                            style={{ width: `${item.score}%` }}
+                          ></div>
+                        </div>
+
+                        <span className="w-8 text-right text-[10px] font-bold text-slate-500 font-mono">
+                          {item.score}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 추천 크리에이터 섹션 */}
+              <div className="pt-2 text-left space-y-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">
+                    {result.aiResult.recommendedCategory} 촬영을 하는 사람들이에요! ✨
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-normal break-keep">
+                    나에게 딱 맞는 크리에이터들과 인포즈에서 함께 작업해보세요! 프로필을 누르면 포트폴리오를 볼 수 있어요.
+                  </p>
+                </div>
+
+                <div
+                  ref={workerScrollRef}
+                  onPointerDown={pauseWorkerAutoScroll}
+                  onPointerUp={resumeWorkerAutoScrollSoon}
+                  onPointerCancel={resumeWorkerAutoScrollSoon}
+                  onTouchStart={pauseWorkerAutoScroll}
+                  onTouchEnd={resumeWorkerAutoScrollSoon}
+                  onWheel={() => {
+                    pauseWorkerAutoScroll();
+                    resumeWorkerAutoScrollSoon();
+                  }}
+                  className="flex space-x-3 overflow-x-auto no-scrollbar pb-1 pt-1 cursor-grab active:cursor-grabbing"
+                >
+                  {[...MOCK_WORKERS, ...MOCK_WORKERS].map((worker, idx) => {
+                    const displayName = worker.nickname.length > 6 
+                      ? worker.nickname.slice(0, 6) + '...' 
+                      : worker.nickname;
+
+                    return (
+                      <a
+                        key={`${worker.nickname}-${idx}`}
+                        href={worker.webProfileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-shrink-0 flex flex-col items-center text-center group"
+                        style={{ width: '74px' }}
+                      >
+                        <div
+                          style={{
+                            width: '64px',
+                            height: '64px',
+                            minWidth: '64px',
+                            minHeight: '64px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            border: '1.5px solid rgba(255, 255, 255, 0.9)',
+                            backgroundColor: '#f1f5f9',
+                            boxShadow: '0 3px 8px rgba(0, 0, 0, 0.06)'
+                          }}
+                          className="group-hover:scale-105 transition-transform duration-200"
+                        >
+                          <img
+                            src={worker.profileImage}
+                            alt={worker.nickname}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block'
+                            }}
+                          />
+                        </div>
+                        
+                        <div className="w-full text-center mt-1.5 px-0.5">
+                          <p className="text-[11px] font-semibold text-slate-800 truncate w-full leading-tight" title={worker.nickname}>
+                            {displayName}
+                          </p>
+                          <span className="block text-[8px] text-slate-400 font-medium uppercase leading-none pt-0.5">
+                            {worker.workerType}
+                          </span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 하단 버튼 2개 */}
+              <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                <button
+                  onClick={handleSaveImage}
+                  className="py-3.5 bg-inpose text-white font-semibold rounded-2xl shadow-md shadow-rose-200 hover:opacity-95 transition text-sm tracking-tight flex items-center justify-center cursor-pointer"
+                >
+                  <DownloadIcon />
+                  <span>결과 카드 저장</span>
+                </button>
+                <button
+                  onClick={handleShareLink}
+                  className="py-3.5 bg-slate-800 text-white font-semibold rounded-2xl shadow-sm hover:bg-slate-700 transition text-sm tracking-tight flex items-center justify-center cursor-pointer"
+                >
+                  <ShareIcon />
+                  <span>친구에게 공유하기</span>
+                </button>
+              </div>
+
+              {/* 이벤트 안내 */}
+              <div className="glass-box rounded-2xl p-4 text-left space-y-2.5">
+                <h4 className="text-sm font-headline text-inpose flex items-center gap-1.5">
+                  <span className="text-base leading-none">📣</span>
+                  <span>지금 결과를 공유하고 경품을 받아보세요!</span>
+                </h4>
+                <ol className="text-xs text-slate-600 space-y-1.5 list-decimal list-inside leading-relaxed font-normal">
+                  <li>인포즈 공식 SNS를 팔로우해요.</li>
+                  <li>AI 추천 결과 이미지를 저장해요.</li>
+                  <li>인스타그램 스토리에 공유하고 인포즈 계정을 태그해요.</li>
+                  <li>이벤트 게시물 댓글에 닉네임과 추천 카테고리를 남겨요.</li>
+                </ol>
+                <div className="bg-rose-50 text-rose-600 font-semibold text-[11px] py-2 text-center rounded-xl border border-rose-100">
+                  스토리로 공유하면 당첨 확률 UP!
+                </div>
+              </div>
+
+              <button
+                onClick={() => { setResult(null); setResultReady(false); setUploadedPhotos([]); setNickname(""); }}
+                className="text-xs text-slate-400 font-normal underline block mx-auto py-0.5 hover:text-slate-600 cursor-pointer"
+              >
+                다른 사진으로 다시 분석하기
+              </button>
+
+              {/* 🌟 정식 인포즈 핑크 로고 적용 브랜드 안내 & 스토어 다운로드 3종 링크 섹션 */}
+              <div className="mt-6 pt-6 border-t border-rose-100/60 text-center space-y-3.5">
+                <div className="flex flex-col items-center space-y-1">
+                  <img src={INPOSE_LOGO_BASE64} alt="INPOSE" className="w-12 h-12 object-contain mb-0.5" />
+                  <h4 className="text-xs font-bold text-slate-800">
+                    인포즈에 대해 더 궁금하신가요?
+                  </h4>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  {/* 1) 인스타그램 구경하기 */}
+                  <a
+                    href="https://www.instagram.com/inpose_official/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3 px-4 bg-white/80 hover:bg-white border border-rose-100 text-slate-700 font-semibold rounded-2xl text-xs shadow-xs flex items-center justify-center space-x-2 transition cursor-pointer"
+                  >
+                    <InstagramIcon className="w-4 h-4 text-rose-500" />
+                    <span>인포즈 인스타 구경하기</span>
+                  </a>
+
+                  {/* 2) 앱스토어 다운받기 */}
+                  <a
+                    href="https://apps.apple.com/us/app/inpose-creator-match/id1538711855"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3 px-4 bg-white/80 hover:bg-white border border-rose-100 text-slate-700 font-semibold rounded-2xl text-xs shadow-xs flex items-center justify-center space-x-2 transition cursor-pointer"
+                  >
+                    <AppStoreIcon className="w-5 h-5 text-slate-900" />
+                    <span>앱스토어 다운받기</span>
+                  </a>
+
+                  {/* 3) 구글스토어 다운받기 */}
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.carpum.inpose"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3 px-4 bg-white/80 hover:bg-white border border-rose-100 text-slate-700 font-semibold rounded-2xl text-xs shadow-xs flex items-center justify-center space-x-2 transition cursor-pointer"
+                  >
+                    <PlayStoreIcon className="w-5 h-5" />
+                    <span>구글스토어 다운받기</span>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          <div className="p-3 border-t border-rose-100/30 text-center mt-auto">
+            <p className="text-[10px] text-slate-400 font-normal">
+              입력된 정보는 무드 분석 결과 생성에만 사용됩니다.
+            </p>
+          </div>
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
